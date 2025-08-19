@@ -2,38 +2,50 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Formulario Preafiliación</title>
+  <title>Formato de Preafiliación</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f7f7f7;
+      background: #f9f9f9;
       padding: 20px;
     }
     .container {
       background: #fff;
       border: 2px solid #6d6e71;
-      border-radius: 10px;
-      padding: 20px;
-      max-width: 800px;
+      border-radius: 12px;
+      padding: 30px;
+      max-width: 900px;
       margin: auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
     h1 {
       text-align: center;
       color: #6d6e71;
+      border-bottom: 3px solid #fff200;
+      padding-bottom: 10px;
     }
     label {
       display: block;
       margin-top: 10px;
       font-weight: bold;
+      color: #333;
     }
     input, textarea {
       width: 100%;
-      padding: 6px;
+      padding: 8px;
       margin-top: 4px;
       border: 1px solid #ccc;
-      border-radius: 5px;
+      border-radius: 6px;
+    }
+    .foto {
+      border: 2px dashed #6d6e71;
+      padding: 20px;
+      text-align: center;
+      margin: 15px 0;
+      background: #fdfdfd;
     }
     .buttons {
       margin-top: 20px;
@@ -43,25 +55,82 @@
     button {
       background: #fff200;
       border: none;
-      padding: 10px 20px;
+      padding: 12px 20px;
       border-radius: 8px;
       cursor: pointer;
       font-weight: bold;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.15);
     }
   </style>
 </head>
 <body>
   <div class="container" id="formulario">
-    <h1>Formato de Preafiliación</h1>
+    <h1>ACTA DE PREAFILIACIÓN</h1>
+
+    <div class="foto">📷 FOTOGRAFÍA (imagen1.png)</div>
+    <div class="foto">📷 FOTOGRAFÍA (imagen2.png)</div>
+
     <form id="preafiliacionForm">
       <label>Nombre completo</label>
       <input type="text" name="nombre" required>
 
-      <label>Correo</label>
-      <input type="email" name="correo" required>
+      <label>Edad</label>
+      <input type="number" name="edad">
 
-      <label>Dirección</label>
-      <textarea name="direccion"></textarea>
+      <label>Fecha de nacimiento</label>
+      <input type="date" name="fecha">
+
+      <label>Domicilio</label>
+      <textarea name="domicilio"></textarea>
+
+      <label>Lugar de residencia</label>
+      <input type="text" name="residencia">
+
+      <label>WhatsApp</label>
+      <input type="text" name="whatsapp">
+
+      <label>Email</label>
+      <input type="email" name="correo">
+
+      <label>Arte, ocupación, oficio, profesión, vocación</label>
+      <input type="text" name="ocupacion">
+
+      <label>Principal tema de preocupación</label>
+      <textarea name="preocupacion"></textarea>
+
+      <label>Acepto aviso de privacidad</label>
+      <input type="checkbox" name="privacidad"> Sí
+      <input type="checkbox" name="privacidad"> No
+
+      <label>Observaciones</label>
+      <textarea name="observaciones"></textarea>
+
+      <label>01. ¿Qué necesitas?</label>
+      <textarea name="q1"></textarea>
+
+      <label>02. ¿Qué pides?</label>
+      <textarea name="q2"></textarea>
+
+      <label>03. ¿Qué piensas?</label>
+      <textarea name="q3"></textarea>
+
+      <label>04. ¿Qué propones?</label>
+      <textarea name="q4"></textarea>
+
+      <label>05. ¿Qué quieres?</label>
+      <textarea name="q5"></textarea>
+
+      <label>06. ¿Qué sientes?</label>
+      <textarea name="q6"></textarea>
+
+      <label>07. ¿Qué estás haciendo y qué harías?</label>
+      <textarea name="q7"></textarea>
+
+      <label>08. Horario disponible</label>
+      <input type="text" name="q8">
+
+      <label>Selecciona programas en los que participarías:</label>
+      <textarea name="programas"></textarea>
     </form>
   </div>
 
@@ -72,6 +141,8 @@
   </div>
 
 <script>
+emailjs.init("TU_PUBLIC_KEY"); // <-- tu publicKey de EmailJS
+
 async function generatePDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF("p", "pt", "a4");
@@ -96,8 +167,19 @@ async function downloadPDF() {
   doc.save("preafiliacion.pdf");
 }
 
-function sendEmail() {
-  alert("Aquí iría la lógica de envío (con EmailJS o backend). Ahorita es solo demo.");
+async function sendEmail() {
+  const doc = await generatePDF();
+  const pdfBase64 = doc.output("datauristring");
+
+  const params = {
+    to_email: "ciudadanmx@gmail.com",
+    message: "Se adjunta el formato de preafiliación.",
+    attachment: pdfBase64
+  };
+
+  emailjs.send("TU_SERVICE_ID", "TU_TEMPLATE_ID", params)
+    .then(res => alert("✅ Enviado correctamente"))
+    .catch(err => alert("❌ Error: " + JSON.stringify(err)));
 }
 </script>
 </body>
