@@ -1,594 +1,104 @@
-# index.html
-
-```html
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Formato de Preafiliación | Ciudadan</title>
-  <!-- Tipografías libres -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <!-- Iconos -->
-  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
-  <!-- jsPDF + html2canvas para PDF cliente -->
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-  <!-- EmailJS (opción sin backend). Sustituye IDs más abajo para habilitar envío real. -->
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <meta charset="UTF-8">
+  <title>Formulario Preafiliación</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
-    :root{
-      --brand:#fff200; /* amarillo marca */
-      --brand-ink:#111; /* texto base */
-      --brand-gray:#6d6e71; /* gris borde logo */
-      --bg:#0b0b0b; /* fondo general oscuro para lucir el amarillo */
-      --card:#151515; /* tarjetas */
-      --muted:#9aa0a6;
-      --ok:#22c55e;
-      --warn:#f59e0b;
-      --err:#ef4444;
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f7f7;
+      padding: 20px;
     }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-      background:radial-gradient(1000px 600px at 10% -10%, rgba(255,242,0,0.15), transparent 60%),
-                 radial-gradient(800px 500px at 90% 10%, rgba(255,242,0,0.12), transparent 60%),
-                 var(--bg);
-      color:#e9e9e9;
+    .container {
+      background: #fff;
+      border: 2px solid #6d6e71;
+      border-radius: 10px;
+      padding: 20px;
+      max-width: 800px;
+      margin: auto;
     }
-    .shell{max-width:1100px; margin:40px auto; padding:24px;}
-    .brandbar{
-      display:flex; align-items:center; gap:16px; margin-bottom:24px;
+    h1 {
+      text-align: center;
+      color: #6d6e71;
     }
-    .logo{
-      width:46px; height:46px; border-radius:50%; background:var(--brand);
-      box-shadow:0 0 0 2px var(--brand-gray) inset, 0 10px 30px rgba(255,242,0,.2);
-      display:grid; place-items:center; color:#000; font-weight:800; letter-spacing:.5px;
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
     }
-    .title{font-size:26px; font-weight:700}
-    .subtitle{color:var(--muted); font-weight:500}
-
-    .card{
-      background:linear-gradient(180deg, #171717, #121212);
-      border:1px solid #202020; border-radius:18px; padding:22px; box-shadow:0 10px 30px rgba(0,0,0,.45);
+    input, textarea {
+      width: 100%;
+      padding: 6px;
+      margin-top: 4px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
     }
-    .grid{
-      display:grid; gap:16px; grid-template-columns:1fr;  
+    .buttons {
+      margin-top: 20px;
+      display: flex;
+      justify-content: space-between;
     }
-    @media (min-width:900px){
-      .grid{grid-template-columns:1.05fr .95fr}
+    button {
+      background: #fff200;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
     }
-
-    .section{margin-top:22px}
-    .section h3{margin:0 0 10px; font-size:18px; color:#f1f1f1}
-
-    label{display:block; font-size:13px; color:#cfcfcf; margin:8px 0 6px}
-    input[type="text"], input[type="email"], input[type="date"], input[type="number"], textarea{
-      width:100%; background:#0e0e0e; color:#fff; border:1px solid #252525; border-radius:12px; padding:12px 14px;
-      outline:none; transition:.2s border;
-    }
-    textarea{min-height:90px; resize:vertical}
-    input:focus, textarea:focus{border-color:#3b3b3b}
-
-    .row{display:grid; grid-template-columns:1fr; gap:12px}
-    @media (min-width:700px){ .row.two{grid-template-columns:1fr 1fr} }
-    @media (min-width:900px){ .row.three{grid-template-columns:repeat(3,1fr)} }
-
-    /* Dropzones de fotografía */
-    .dropzone{
-      position:relative; aspect-ratio:3/4; background:#0e0e0e; border:1px dashed #2a2a2a; border-radius:14px;
-      display:grid; place-items:center; overflow:hidden; cursor:pointer;
-    }
-    .dropzone:hover{border-color:#3a3a3a}
-    .dropzone img{width:100%; height:100%; object-fit:cover}
-    .dropzone .hint{position:absolute; inset:auto 10px 10px 10px; text-align:center; font-size:12px; color:#bdbdbd}
-    .dropzone input{position:absolute; inset:0; opacity:0; cursor:pointer}
-
-    .muted{color:var(--muted); font-size:12px}
-
-    .toolbar{
-      position:sticky; bottom:0; z-index:10; margin-top:24px; background:linear-gradient(180deg, rgba(11,11,11,.2), rgba(11,11,11,1));
-      border-top:1px solid #1f1f1f; padding:14px; border-radius:18px; display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between
-    }
-    .actions{display:flex; gap:10px; flex-wrap:wrap}
-    button{
-      appearance:none; border:none; border-radius:12px; padding:12px 16px; font-weight:700; cursor:pointer;
-      display:inline-flex; align-items:center; gap:8px; box-shadow:0 10px 18px rgba(255,242,0,.08);
-    }
-    .btn-primary{background:var(--brand); color:#000}
-    .btn-ghost{background:#1a1a1a; color:#fff; border:1px solid #2a2a2a}
-    .badge{background:#1c1c1c; color:#dcdcdc; border:1px solid #2a2a2a; padding:8px 10px; border-radius:10px; font-size:12px}
-
-    .notice{border-left:3px solid var(--brand); background:#101010; padding:12px 14px; border-radius:12px; color:#dcdcdc}
-    .success{border-left-color:var(--ok)}
-    .error{border-left-color:var(--err)}
-
-    /* Hoja A4 para exportación: se usa este contenedor para capturar a PDF */
-    .a4{width:794px; /* px a 96dpi aprox para A4 (210mm) */
-        background:white; color:#000; padding:28px; border-radius:8px; margin:0 auto;
-        font-size:12.5px; line-height:1.35; box-shadow:0 0 0 1px #ddd}
-    .a4 h2{margin:0 0 6px; font-size:16px}
-    .a4 small{color:#444}
-    .a4 .row{gap:8px}
-    .a4 .label{font-weight:600}
-    .a4 .answer{border-bottom:1px solid #aaa; min-height:22px}
-
-    .print-only{display:none}
-    @media print{ .print-hide{display:none} .print-only{display:block} body{background:white} }
   </style>
 </head>
 <body>
-  <div class="shell">
-    <div class="brandbar">
-      <div class="logo">C</div>
-      <div>
-        <div class="title">Formato de Preafiliación</div>
-        <div class="subtitle">Cultura Integral de Enlace Universal · Asamblea Cívica General Permanente</div>
-      </div>
-      <span class="badge" title="Diseño Ciudadan">UI amarillo #fff200 · gris #6d6e71</span>
-    </div>
+  <div class="container" id="formulario">
+    <h1>Formato de Preafiliación</h1>
+    <form id="preafiliacionForm">
+      <label>Nombre completo</label>
+      <input type="text" name="nombre" required>
 
-    <form id="preafiliacion" class="grid card" autocomplete="on">
-      <section class="section">
-        <h3>Datos Generales</h3>
-        <div class="row two">
-          <div>
-            <label for="nombre">Nombre</label>
-            <input id="nombre" name="nombre" type="text" placeholder="Nombre completo" required>
-          </div>
-          <div>
-            <label for="edad">Edad (años)</label>
-            <input id="edad" name="edad" type="number" min="0" max="120" placeholder="18" required>
-          </div>
-        </div>
-        <div class="row two">
-          <div>
-            <label for="nacimiento">Fecha de nacimiento</label>
-            <input id="nacimiento" name="nacimiento" type="date" required>
-          </div>
-          <div>
-            <label for="residencia">Lugar de Residencia</label>
-            <input id="residencia" name="residencia" type="text" placeholder="Ciudad, Estado, País" required>
-          </div>
-        </div>
-        <div class="row">
-          <div>
-            <label for="domicilio">Domicilio</label>
-            <input id="domicilio" name="domicilio" type="text" placeholder="Calle, número, colonia, municipio, CP" required>
-          </div>
-        </div>
-        <div class="row two">
-          <div>
-            <label for="whatsapp">WhatsApp</label>
-            <input id="whatsapp" name="whatsapp" type="text" placeholder="55 1234 5678" required>
-          </div>
-          <div>
-            <label for="email">E-mail</label>
-            <input id="email" name="email" type="email" placeholder="tucorreo@dominio.com" required>
-          </div>
-        </div>
-      </section>
+      <label>Correo</label>
+      <input type="email" name="correo" required>
 
-      <section class="section">
-        <h3>Fotografías</h3>
-        <div class="row two">
-          <div class="dropzone" data-ph="pics/imagen1.png">
-            <input type="file" accept="image/*">
-            <img alt="Foto 1" src="pics/imagen1.png">
-            <div class="hint">Click o suelta imagen aquí (imagen1.png)</div>
-          </div>
-          <div class="dropzone" data-ph="pics/imagen2.png">
-            <input type="file" accept="image/*">
-            <img alt="Foto 2" src="pics/imagen2.png">
-            <div class="hint">Click o suelta imagen aquí (imagen2.png)</div>
-          </div>
-        </div>
-      </section>
-
-      <section class="section">
-        <h3>Cuestionario para asignar equipo</h3>
-        <div class="row">
-          <div>
-            <label for="ocupacion">Arte, ocupación, oficio, profesión, vocación</label>
-            <input id="ocupacion" name="ocupacion" type="text" placeholder="Especifica">
-          </div>
-        </div>
-        <div class="row">
-          <div>
-            <label for="preocupacion">Principal tema de preocupación</label>
-            <input id="preocupacion" name="preocupacion" type="text" placeholder="Especifica">
-          </div>
-        </div>
-        <div class="row two">
-          <div>
-            <label for="privacidad">Acepto aviso de privacidad</label>
-            <select id="privacidad" name="privacidad">
-              <option value="Si">Sí</option>
-              <option value="No">No</option>
-            </select>
-          </div>
-          <div>
-            <label for="fecha">Fecha</label>
-            <input id="fecha" name="fecha" type="date">
-          </div>
-        </div>
-        <div class="row">
-          <div>
-            <label for="observaciones">¿Alguna otra observación?</label>
-            <textarea id="observaciones" name="observaciones" placeholder="Escribe aquí..."></textarea>
-          </div>
-        </div>
-      </section>
-
-      <section class="section">
-        <h3>Aclaraciones</h3>
-        <div class="row two">
-          <div>
-            <label for="q01">01.- ¿Qué necesitas?</label>
-            <textarea id="q01" name="q01"></textarea>
-          </div>
-          <div>
-            <label for="q02">02.- ¿Qué pides?</label>
-            <textarea id="q02" name="q02"></textarea>
-          </div>
-        </div>
-        <div class="row two">
-          <div>
-            <label for="q03">03.- ¿Qué piensas?</label>
-            <textarea id="q03" name="q03"></textarea>
-          </div>
-          <div>
-            <label for="q04">04.- ¿Qué propones?</label>
-            <textarea id="q04" name="q04"></textarea>
-          </div>
-        </div>
-      </section>
-
-      <section class="section">
-        <h3>Formato de Preafiliación (continuación)</h3>
-        <div class="row two">
-          <div>
-            <label for="q05">05.- ¿Qué quieres?</label>
-            <textarea id="q05" name="q05"></textarea>
-          </div>
-          <div>
-            <label for="q06">06.- ¿Qué sientes?</label>
-            <textarea id="q06" name="q06"></textarea>
-          </div>
-        </div>
-        <div class="row">
-          <div>
-            <label for="q07">07.- ¿Qué estás haciendo y qué estás dispuesto(a) a hacer?</label>
-            <textarea id="q07" name="q07"></textarea>
-          </div>
-        </div>
-        <div class="row">
-          <div>
-            <label for="horario">08.- Horario disponible</label>
-            <input id="horario" name="horario" type="text" placeholder="Ej. L-V 9:00–18:00, S 10:00–14:00">
-          </div>
-        </div>
-      </section>
-
-      <section class="section">
-        <h3>Programas alternativos pacíficos</h3>
-        <p class="muted">Selección opcional; puedes marcar los que te interesen.</p>
-        <div id="programas" class="row three"></div>
-      </section>
-
-      <div class="toolbar print-hide">
-        <div class="badge"><i class="ph ph-file-text"></i> Genera y revisa el PDF antes de enviar</div>
-        <div class="actions">
-          <button type="button" class="btn-ghost" id="btnVista"><i class="ph ph-eye"></i> Vista previa PDF</button>
-          <button type="button" class="btn-primary" id="btnPdf"><i class="ph ph-download-simple"></i> Descargar PDF</button>
-          <button type="button" class="btn-ghost" id="btnEmail"><i class="ph ph-paper-plane-tilt"></i> Enviar a ciudadanmx@gmail.com</button>
-        </div>
-      </div>
-
-      <div id="alerta" class="notice print-hide" style="display:none"></div>
+      <label>Dirección</label>
+      <textarea name="direccion"></textarea>
     </form>
+  </div>
 
-    <!-- Contenido oculto para render A4 (se llena con los datos del formulario) -->
-    <div id="sheet" class="a4 print-hide" aria-hidden="true"></div>
+  <div class="buttons">
+    <button onclick="previewPDF()">📄 Ver PDF</button>
+    <button onclick="downloadPDF()">⬇ Descargar PDF</button>
+    <button onclick="sendEmail()">✉ Enviar por Mail</button>
   </div>
 
 <script>
-  // ==========================
-  // Utilidades UI y datos base
-  // ==========================
-  const PROGS = [
-    '01.- Aprende, Educa y Trabaja Jugando',
-    '02.- Brigadas, Campañas, Patrullas y Rondas Escolares',
-    '03.- Comunicación Neuroviogenética',
-    '04.- Escuela de Acompañamiento y Apoyo Jurídico Psicosocial',
-    '05.- Reingeniería Arquitectónica Psicosocial',
-    '06.- Reingeniería Arquitectónica de Estrategias y Estructuras',
-    '07.- Escalafón de Ascensos y Descensos',
-    '08.- Tabulador de Egresos e Ingresos',
-    '09.- Sinergia Nacional de Estudiantes Emprendedores',
-    '10.- Foro de Libertad de Expresión',
-    '11.- Clínicas Abiertas',
-    '12.- Clínicas Cerradas',
-    '13.- Mesas de Convivencia, Diálogo, Estudio y Trabajo Extraordinario',
-    '14.- Alinear, Armonizar, Disciplinar',
-    '15.- Cambiar, Corregir, Mejorar',
-    '16.- Conciliar, Mediar y Negociar',
-    '17.- TaTeTra, Dinámicas Intensas Interactivas',
-    '18.- Cultura Jurídica',
-    '19.- Educación y Estudio Jurídico',
-    '20.- Trabajo Jurídico Legislativo',
-    '21.- El Deber Ser de la Justicia, Derecho y Legalidad',
-    '22.- Justicia Mesiánica Salomónica',
-    '23.- UBDARAS Universidad para el Bienestar Común y el Desarrollo Armónico Autosustentable'
-  ];
+async function generatePDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF("p", "pt", "a4");
+  const element = document.getElementById("formulario");
 
-  const progWrap = document.getElementById('programas');
-  PROGS.forEach((p, i)=>{
-    const id = 'prog'+(i+1);
-    const div = document.createElement('div');
-    div.innerHTML = `
-      <label style="display:flex; gap:10px; align-items:flex-start">
-        <input id="${id}" name="programas" type="checkbox" value="${p}" style="margin-top:3px">
-        <span>${p}</span>
-      </label>`;
-    progWrap.appendChild(div);
-  });
+  const canvas = await html2canvas(element, { scale: 2 });
+  const imgData = canvas.toDataURL("image/png");
+  const imgProps = doc.getImageProperties(imgData);
+  const pdfWidth = doc.internal.pageSize.getWidth();
+  const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+  doc.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+  return doc;
+}
 
-  // Fotografía: vista previa drag&drop
-  document.querySelectorAll('.dropzone').forEach(zone=>{
-    const input = zone.querySelector('input');
-    const img = zone.querySelector('img');
-    const ph = zone.dataset.ph;
-    zone.addEventListener('dragover', e=>{ e.preventDefault(); zone.style.borderColor = '#3a3a3a'; });
-    zone.addEventListener('dragleave', ()=>{ zone.style.borderColor = '#2a2a2a'; });
-    zone.addEventListener('drop', e=>{ e.preventDefault(); zone.style.borderColor = '#2a2a2a'; if(e.dataTransfer.files[0]) handle(e.dataTransfer.files[0]); });
-    input.addEventListener('change', e=>{ if(e.target.files[0]) handle(e.target.files[0]); });
-    function handle(file){
-      const reader = new FileReader();
-      reader.onload = ev=>{ img.src = ev.target.result };
-      reader.readAsDataURL(file);
-    }
-    // reset si falla
-    img.onerror = ()=>{ img.src = ph };
-  });
+async function previewPDF() {
+  const doc = await generatePDF();
+  window.open(doc.output("bloburl"), "_blank");
+}
 
-  const alerta = (msg, type=''){ const box = document.getElementById('alerta'); box.className = `notice ${type}`; box.textContent = msg; box.style.display = 'block'; setTimeout(()=> box.style.display='none', 5000); }
+async function downloadPDF() {
+  const doc = await generatePDF();
+  doc.save("preafiliacion.pdf");
+}
 
-  // ==========================
-  // Construcción de hoja A4
-  // ==========================
-  function buildSheet(){
-    const f = document.getElementById('preafiliacion');
-    const get = id => document.getElementById(id).value || '';
-    const fotos = Array.from(document.querySelectorAll('.dropzone img')).map(i=> i.src);
-
-    const progsSel = Array.from(document.querySelectorAll('input[name="programas"]:checked')).map(x=> x.value);
-
-    const today = new Date();
-
-    const html = `
-      <div style="display:flex; align-items:center; gap:12px; margin-bottom:6px">
-        <div style="width:36px; height:36px; border-radius:50%; background:${'var(--brand)'}; box-shadow:0 0 0 2px ${'var(--brand-gray)'} inset"></div>
-        <div>
-          <h2 style="margin:0">FORMATO ACTA DE PREAFILIACIÓN</h2>
-          <small>Cultura Integral de Enlace Universal · Asamblea Cívica General Permanente</small>
-        </div>
-      </div>
-
-      <p style="margin:8px 0 14px; font-size:11px; color:#333">Se aplicará para conocer antecedentes culturales, costumbres, creencias, hábitos y tradiciones ... (periodo de 7 años).</p>
-
-      <table style="width:100%; border-collapse:collapse; font-size:12.5px">
-        <tr>
-          <td style="width:35%; vertical-align:top; padding-right:10px">
-            <div style="display:grid; gap:8px">
-              <div style="width:100%; aspect-ratio:3/4; border:1px solid #aaa; border-radius:6px; overflow:hidden">
-                <img src="${fotos[0]}" style="width:100%; height:100%; object-fit:cover"/>
-              </div>
-              <div style="width:100%; aspect-ratio:3/4; border:1px solid #aaa; border-radius:6px; overflow:hidden">
-                <img src="${fotos[1]}" style="width:100%; height:100%; object-fit:cover"/>
-              </div>
-            </div>
-          </td>
-          <td style="vertical-align:top">
-            <div class="row">
-              <div><span class="label">Nombre:</span> <div class="answer">${get('nombre')}</div></div>
-              <div class="row two" style="margin-top:8px">
-                <div><span class="label">Edad:</span> <div class="answer">${get('edad')} años</div></div>
-                <div><span class="label">Fecha de nacimiento:</span> <div class="answer">${get('nacimiento')}</div></div>
-              </div>
-              <div style="margin-top:8px"><span class="label">Domicilio:</span> <div class="answer">${get('domicilio')}</div></div>
-              <div class="row two" style="margin-top:8px">
-                <div><span class="label">Lugar de Residencia:</span> <div class="answer">${get('residencia')}</div></div>
-                <div><span class="label">WhatsApp:</span> <div class="answer">${get('whatsapp')}</div></div>
-              </div>
-              <div style="margin-top:8px"><span class="label">E-mail:</span> <div class="answer">${get('email')}</div></div>
-            </div>
-
-            <div style="margin-top:12px">
-              <div><span class="label">Arte/Ocupación/Profesión/Vocación:</span> <div class="answer">${get('ocupacion')}</div></div>
-              <div style="margin-top:8px"><span class="label">Principal tema de preocupación:</span> <div class="answer">${get('preocupacion')}</div></div>
-              <div class="row two" style="margin-top:8px">
-                <div><span class="label">Aviso de privacidad:</span> <div class="answer">${get('privacidad')}</div></div>
-                <div><span class="label">Fecha:</span> <div class="answer">${get('fecha') || today.toISOString().slice(0,10)}</div></div>
-              </div>
-              <div style="margin-top:8px"><span class="label">Observaciones:</span> <div class="answer">${(get('observaciones')||'')}</div></div>
-            </div>
-          </td>
-        </tr>
-      </table>
-
-      <h3 style="margin:16px 0 6px">Aclaraciones</h3>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
-        <div><div class="label">01.- ¿Qué necesitas?</div><div class="answer">${get('q01')}</div></div>
-        <div><div class="label">02.- ¿Qué pides?</div><div class="answer">${get('q02')}</div></div>
-        <div><div class="label">03.- ¿Qué piensas?</div><div class="answer">${get('q03')}</div></div>
-        <div><div class="label">04.- ¿Qué propones?</div><div class="answer">${get('q04')}</div></div>
-        <div><div class="label">05.- ¿Qué quieres?</div><div class="answer">${get('q05')}</div></div>
-        <div><div class="label">06.- ¿Qué sientes?</div><div class="answer">${get('q06')}</div></div>
-      </div>
-      <div style="margin-top:10px">
-        <div class="label">07.- ¿Qué estás haciendo y qué estás dispuesto(a) a hacer?</div>
-        <div class="answer">${get('q07')}</div>
-      </div>
-      <div style="margin-top:10px"><span class="label">08.- Horario disponible:</span> <span class="answer">${get('horario')}</span></div>
-
-      <h3 style="margin:16px 0 6px">Programas alternativos pacíficos (seleccionados)</h3>
-      <ul style="margin:6px 0 0 18px; padding:0">${progsSel.map(p=>`<li>${p}</li>`).join('') || '<li>—</li>'}</ul>
-
-      <div style="display:flex; justify-content:space-between; margin-top:18px; font-size:11px; color:#444">
-        <div>Juárez, Nuevo León, México</div>
-        <div>Generado: ${new Date().toLocaleDateString()}</div>
-      </div>
-    `;
-    const sheet = document.getElementById('sheet');
-    sheet.innerHTML = html;
-    return sheet;
-  }
-
-  // ==========================
-  // Generación del PDF
-  // ==========================
-  async function makePDF(){
-    const sheet = buildSheet();
-    // Render con html2canvas a escala para mayor nitidez
-    const canvas = await html2canvas(sheet, {scale:2, background:'#ffffff'});
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jspdf.jsPDF({orientation:'portrait', unit:'pt', format:'a4'});
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-
-    // Dimensiones de la imagen
-    const imgW = pageWidth - 48; // márgenes
-    const ratio = canvas.height / canvas.width;
-    const imgH = imgW * ratio;
-
-    pdf.addImage(imgData, 'PNG', 24, 24, imgW, imgH, undefined, 'FAST');
-
-    return pdf;
-  }
-
-  // ==========================
-  // Acciones
-  // ==========================
-  document.getElementById('btnVista').addEventListener('click', ()=>{
-    buildSheet();
-    alerta('Previsualización actualizada. Desplázate arriba para verla.', 'success');
-    window.scrollTo({top:0, behavior:'smooth'});
-  });
-
-  document.getElementById('btnPdf').addEventListener('click', async ()=>{
-    try{
-      const pdf = await makePDF();
-      const nombre = (document.getElementById('nombre').value || 'preafiliacion').trim().replace(/\s+/g,'_');
-      pdf.save(`${nombre}_preafiliacion.pdf`);
-    }catch(e){ console.error(e); alerta('No se pudo generar el PDF', 'error'); }
-  });
-
-  // ===== Envío por correo (EmailJS o fallback mailto) =====
-  // 1) Opción A (recomendada): EmailJS sin backend.
-  //    - Crea cuenta en emailjs.com (gratis), servicio SMTP público.
-  //    - Sustituye EMAILJS_PUBLIC_KEY, EMAILJS_SERVICE_ID y EMAILJS_TEMPLATE_ID aquí abajo.
-  //    - En tu plantilla define variables: to_email, subject, message, attachment (base64)
-  // 2) Opción B (fallback): se abrirá un mailto con el PDF adjuntado manualmente.
-
-  const EMAILJS_PUBLIC_KEY   = 'REEMPLAZA_PUBLIC_KEY';
-  const EMAILJS_SERVICE_ID   = 'REEMPLAZA_SERVICE_ID';
-  const EMAILJS_TEMPLATE_ID  = 'REEMPLAZA_TEMPLATE_ID';
-  if(window.emailjs && EMAILJS_PUBLIC_KEY !== 'REEMPLAZA_PUBLIC_KEY'){
-    emailjs.init({publicKey: EMAILJS_PUBLIC_KEY});
-  }
-
-  document.getElementById('btnEmail').addEventListener('click', async ()=>{
-    try{
-      const pdf = await makePDF();
-      const blob = pdf.output('blob');
-      const base64 = await new Promise(res=>{ const r = new FileReader(); r.onload = ()=> res(r.result.split(',')[1]); r.readAsDataURL(blob); });
-
-      const nombre = (document.getElementById('nombre').value || 'Preafiliación');
-      const subject = `Preafiliación – ${nombre}`;
-
-      if(window.emailjs && EMAILJS_PUBLIC_KEY !== 'REEMPLAZA_PUBLIC_KEY'){
-        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-          to_email: 'ciudadanmx@gmail.com',
-          subject,
-          message: 'Se adjunta PDF de preafiliación generado desde el formulario web.',
-          attachment: base64,
-          filename: `${nombre.trim().replace(/\s+/g,'_')}_preafiliacion.pdf`
-        });
-        alerta('Correo enviado a ciudadanmx@gmail.com ✔️', 'success');
-      } else {
-        // Fallback: descarga y abre mailto
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a'); a.href = url; a.download = `${nombre.trim().replace(/\s+/g,'_')}_preafiliacion.pdf`; a.click();
-        URL.revokeObjectURL(url);
-        window.location.href = `mailto:ciudadanmx@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent('Adjunta el PDF descargado a este correo y envíalo.')}\n`;
-        alerta('Descargamos el PDF y abrimos tu correo por defecto para adjuntarlo.', 'warn');
-      }
-    }catch(e){ console.error(e); alerta('No se pudo enviar el correo. Revisa tu conexión o configuración de EmailJS.', 'error'); }
-  });
+function sendEmail() {
+  alert("Aquí iría la lógica de envío (con EmailJS o backend). Ahorita es solo demo.");
+}
 </script>
 </body>
 </html>
-```
-
----
-
-## (Opcional) Envío con backend propio (Node + Nodemailer)
-
-> **Solo si prefieres no usar EmailJS.** Deja el HTML tal cual y agrega este `server.js`. Cambia el botón de envío para que haga `fetch('/send-email', { method: 'POST', body: FormData })` con el PDF.
-
-```js
-// server.js
-// npm init -y && npm i express multer nodemailer cors
-const express = require('express');
-const multer  = require('multer');
-const nodemailer = require('nodemailer');
-const cors = require('cors');
-const app = express();
-app.use(cors());
-const upload = multer();
-
-// Configura tu SMTP (Gmail: requiere app password)
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com', port: 465, secure: true,
-  auth: { user: 'TU_CORREO@gmail.com', pass: 'TU_APP_PASSWORD' }
-});
-
-app.post('/send-email', upload.single('pdf'), async (req, res)=>{
-  try{
-    const { nombre } = req.body;
-    const pdf = req.file; // field name: 'pdf'
-    await transporter.sendMail({
-      from: 'TU_CORREO@gmail.com',
-      to: 'ciudadanmx@gmail.com',
-      subject: `Preafiliación – ${nombre || 'Ciudadan'}`,
-      text: 'Se adjunta PDF de preafiliación generado desde el formulario web.',
-      attachments: [{ filename: `${(nombre||'preafiliacion').replace(/\s+/g,'_')}.pdf`, content: pdf.buffer }]
-    });
-    res.json({ok:true});
-  }catch(err){ console.error(err); res.status(500).json({ok:false, error: String(err)}) }
-});
-
-app.listen(3001, ()=> console.log('Email API en http://localhost:3001'));
-```
-
-### Cómo conectar el frontend con este backend
-
-En el HTML, reemplaza el controlador del botón **Enviar** por:
-
-```js
-// dentro del listener de btnEmail, sustituir bloque EmailJS por:
-const pdf = await makePDF();
-const blob = pdf.output('blob');
-const fd = new FormData();
-fd.append('nombre', document.getElementById('nombre').value || 'Preafiliación');
-fd.append('pdf', blob, 'preafiliacion.pdf');
-const r = await fetch('http://localhost:3001/send-email', { method:'POST', body: fd });
-if(!r.ok) throw new Error('HTTP '+r.status);
-alerta('Correo enviado a ciudadanmx@gmail.com ✔️', 'success');
-```
-
-> **Archivos de imágenes**: coloca tus archivos en `pics/imagen1.png` y `pics/imagen2.png`. Puedes renombrar más adelante; el layout se adapta.
